@@ -43,7 +43,7 @@ function process_mpd()
             {
                 $change1 = time() - (int) $tempXML->completed->attributes();
             }
-            if ($change1 > 1800 || $change2 > 1800)  //clean folder after 30 mins after test completed or 30 mins after test started
+            if ($change1 > 7200 || $change2 > 7200)  //clean folder after 2 hours after test completed or 2 hours after test started
                 rrmdir(dirname(__FILE__) . '/' . 'temp' . '/' . $file); // if last time folder was modified exceed 300 second it should be removed 
         }
     }
@@ -153,6 +153,7 @@ function process_mpd()
     }
     $progressXML->MPDConformance = $temp_mpdres;
     $progressXML->MPDConformance->addAttribute('url', str_replace($_SERVER['DOCUMENT_ROOT'], 'http://' . $_SERVER['SERVER_NAME'], $locate . '/mpdreport.txt'));
+    $progressXML->MPDConformance->addAttribute('MPDLocation', $url_array[0]); // add exact MPD file location for issue debugging purposes
     $progressXML->asXml(trim($locate . '/progress.xml'));
        
     //Create feature list here so that only MPD Conformance also shows feature list.
@@ -162,6 +163,7 @@ function process_mpd()
     $dom->appendChild($dom_sxe);
     $MPD = $dom->getElementsByTagName('MPD')->item(0); // access the parent "MPD" in mpd file
     createMpdFeatureList($dom, $schematronIssuesReport);
+    $dom->save($locate."/providedMPD.mpd"); // save the MPD for issue debugging purposes
 
     // skip the rest when we should exit
     if ($exit === true)
@@ -648,6 +650,14 @@ function process_mpd()
             {
                 $RepXML = $AdaptationXML->addChild('Representation');
                 $RepXML->addAttribute('id', $k1 + 1);
+                
+                $str = '{';
+                for($l1 = 0; $l1 < sizeof($period_url[$j1][$k1]); $l1++)
+                {
+                    $str = $str . $period_url[$j1][$k1][$l1] . ',';
+                }
+                $str = substr($str, 0, strlen($str)-1) . '}';
+                $RepXML->addAttribute('url', $str);
             }
         }
     }
@@ -837,7 +847,15 @@ function process_mpd()
                 {
                     $processArguments = $processArguments . $Period_arr[$count1]['height'] . " ";
                 }
-
+                
+                if($Period_arr[$count1]['sar'] !== 0){
+                    $sar_x_y = explode(':', $Period_arr[$count1]['sar']);
+                    $processArguments = $processArguments . '-sarx ' . $sar_x_y[0] . ' -sary ' . $sar_x_y[1] . " ";
+                }
+                elseif($Period_arr[$count1]['Representation']['sar'][$count2] !== 0){
+                    $sar_x_y = explode(':', $Period_arr[$count1]['Representation']['sar'][$count2]);
+                    $processArguments = $processArguments . '-sarx ' . $sar_x_y[0] . ' -sary ' . $sar_x_y[1] . " ";
+                }
 
                 if ($type === "dynamic")
                     $processArguments = $processArguments . "-dynamic ";
@@ -977,8 +995,8 @@ function process_mpd()
                         $Adaptnum = (int) substr($repno, $pos, 1) + 1;
                         $pos += strlen('rep');
                         $repnum = (int) substr($repno, $pos, 1) + 1;
-                        if($Period_arr[$count1]['mimeType']== "application/ttml+xml")
-                            file_put_contents($locate . '/' . "stderr.txt", "### error:  \n###        Failed to process Adaptation Set " . $Adaptnum . ", Representation " . $repnum . "!, as mimeType= 'application/ttml+xml' not supported");
+                        if($Period_arr[$count1]['mimeType']== "application/ttml+xml" || $Period_arr[$count1]['mimeType']== "image/jpeg")
+                            file_put_contents($locate . '/' . "stderr.txt", "### error:  \n###        Failed to process Adaptation Set " . $Adaptnum . ", Representation " . $repnum . "!, as mimeType= '".$Period_arr[$count1]['mimeType']."' not supported");
                         else
                             file_put_contents($locate . '/' . "stderr.txt", "### error:  \n###        Failed to process Adaptation Set " . $Adaptnum . ", Representation " . $repnum . "!");
                     }

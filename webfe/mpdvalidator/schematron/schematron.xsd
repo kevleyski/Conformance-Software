@@ -53,6 +53,8 @@
 			<assert test="if (contains(ancestor::dash:MPD/@profiles, 'http://dashif.org/guidelines/dash') and dash:SegmentList) then false() else true()">DASH-IF IOP Section 3.2.2: "the Period.SegmentList element shall not be present" violated here </assert>
 			<!-- RD2.1	DASH-IF -->
 			<assert test="if (contains(ancestor::dash:MPD/@profiles, 'http://dashif.org/guidelines/dash') and (count(child::dash:AdaptationSet[@contentType='video']) > 1) and (count(descendant::dash:Role[@value='main'])=0)) then false() else true()"> DASH-IF IOP Section 3.2.2: "If a Period contains multiple Adaptation Sets with value of the @contentType="video" then at least one Adaptation Set shall contain a Role el-ement $&lt;$Role scheme="urn:mpeg:dash:role:2011" value="main"&gt;" violated here</assert >
+                        <!-- 	DASH 8.3.2 -->
+                        <assert test="if (contains(ancestor::dash:MPD/@profiles, 'urn:mpeg:dash:profile:isoff-on-demand:2011') and (child::dash:SegmentList or child::dash:SegmentTemplate)) then false() else true()">Neither the Period.SegmentList element nor the Period.SegmentTemplate element shall be present for On-Demand profile, violated here. </assert>
 		</rule>
 	</pattern>
 	<pattern name="AdaptationSet element">
@@ -71,9 +73,9 @@
 			<!-- R3.4 -->
 			<assert test="if (descendant::dash:Representation/@bandwidth &lt; @minBandwidth or descendant::dash:Representation/@bandwidth > @maxBandwidth) then false() else true()">The value of the bandwidth attribute shall be in the range defined by the AdaptationSet.</assert>
 			<!-- R3.5 -->
-			<assert test="if (descendant::dash:Representation/@width &lt; @minWidth or descendant::dash:Representation/@width > @maxWidth) then false() else true()">The value of the width attribute shall be in the range defined by the AdaptationSet.</assert>
+			<assert test="if (descendant::dash:Representation/@width > @maxWidth) then false() else true()">The value of the width attribute shall be in the range defined by the AdaptationSet.</assert>
 			<!-- R3.6 -->
-			<assert test="if (descendant::dash:Representation/@height &lt; @minHeight or descendant::dash:Representation/@height > @maxHeight) then false() else true()">The value of the height attribute shall be in the range defined by the AdaptationSet.</assert>
+			<assert test="if (descendant::dash:Representation/@height > @maxHeight) then false() else true()">The value of the height attribute shall be in the range defined by the AdaptationSet.</assert>
 			<!-- R3.7 -->
 			<assert test="if (count(child::dash:Representation)=0) then false() else true()">An AdaptationSet shall have at least one Representation element.</assert>
 			<!-- R3.8 -->
@@ -285,6 +287,13 @@
                 <rule context="dash:EssentialProperty">
                 <!-- R20.1 -->
                     <assert  test="if((@schemeIdUri= 'http://dashif.org/guidelines/thumbnail_tile') and not((count(tokenize(@value, 'x'))=2)))then false() else true()"> If EssentialProperty descriptor with @schemeIdUri set to http://dashif.org/guidelines/thumbnail_tile is present, then value shall provide horizontal and vertical number of tiles separated by an 'x'. </assert>
+                <!-- R20.2 -->
+                    <assert  test="if((@schemeIdUri= 'http://dashif.org/guidelines/thumbnail_tile') and not(parent::dash:Representation/@bandwidth))then false() else true()"> If EssentialProperty descriptor with @schemeIdUri set to http://dashif.org/guidelines/thumbnail_tile is present, then bandwidth shall be used to describe the tiling.'. </assert>
+                <!-- R20.3 -->
+                    <assert  test="if((@schemeIdUri= 'http://dashif.org/guidelines/thumbnail_tile') and not(parent::dash:Representation/@height) and not(ancestor::dash:AdaptationSet/@height))then false() else true()"> If EssentialProperty descriptor with @schemeIdUri set to http://dashif.org/guidelines/thumbnail_tile is present, then height shall be used to describe the tiling. </assert>
+                <!-- R20.4 -->
+                    <assert  test="if((@schemeIdUri= 'http://dashif.org/guidelines/thumbnail_tile') and not(parent::dash:Representation/@width) and not(ancestor::dash:AdaptationSet/@width))then false() else true()"> If EssentialProperty descriptor with @schemeIdUri set to http://dashif.org/guidelines/thumbnail_tile is present, then width shall be used to describe the tiling. </assert>
+     
                 </rule>
         </pattern>
 </schema>
